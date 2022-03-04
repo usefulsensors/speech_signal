@@ -5,6 +5,7 @@ CCFLAGS := \
   -Werror \
   -g \
   -O0 \
+  -D__USE_GNU \
   -Isrc \
   -Isrc/audio \
   -Isrc/third_party \

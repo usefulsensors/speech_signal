@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+#include <locale.h>
+#include <sched.h>
 
 #include <pulse/simple.h>
 #include <pulse/error.h>
@@ -391,11 +398,22 @@ static bool process_audio(const Settings* settings, ModelState* model_state) {
   }
 }
 
+static void set_affinity() {
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(0, &cpuset);
+  CPU_SET(1, &cpuset);
+  CPU_SET(2, &cpuset);
+  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+}
+
 int app_main(int argc, char** argv) {
   Settings* settings = settings_init_from_argv(argc, argv);
   if (settings == NULL) {
     return 1;
   }
+
+  set_affinity();
 
   ModelState* model_state = NULL;
   if (!load_model(settings, &model_state)) {
