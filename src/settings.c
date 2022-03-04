@@ -74,6 +74,7 @@ static void set_defaults(Settings* settings) {
   settings->hot_words = NULL;
   settings->stream_capture_file = NULL;
   settings->stream_capture_duration = 16000;
+  settings->signal_file = "/tmp/signals/speech.txt";
 }
 
 static void find_model_for_language(Settings* settings) {
@@ -252,6 +253,7 @@ Settings* settings_init_from_argv(int argc, char** argv) {
     YARGS_INT32("extended_stream_size", "r", &settings->extended_stream_size, ""),
     YARGS_STRING("stream_capture_file", "f", &settings->stream_capture_file, ""),
     YARGS_INT32("stream_capture_duration", "g", &settings->stream_capture_duration, ""),
+    YARGS_STRING("signal_file", "w", (const char**)(&settings->signal_file), ""),
   };
   const int flags_length = sizeof(flags) / sizeof(flags[0]);
 

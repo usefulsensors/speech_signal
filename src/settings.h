@@ -31,6 +31,7 @@ extern "C" {
     const char* hot_words;
     const char* stream_capture_file;
     int stream_capture_duration;
+    char* signal_file;
     char** files;
     int files_count;
   } Settings;

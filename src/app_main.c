@@ -224,6 +224,52 @@ static void output_streaming_transcript(const Metadata* current_metadata,
   free(previous_text);
 }
 
+static void save_last_line_to_file(const char* current_text,
+  const char* previous_text, const char* filename) {
+  // Has anything changed since last time?
+  if ((previous_text == NULL) ||
+    (strcmp(current_text, previous_text) == 0)) {
+    return;
+  }
+
+  char** current_lines = NULL;
+  int current_lines_length = 0;
+  string_split(current_text, '\n', -1, &current_lines, &current_lines_length);
+
+  FILE* file = fopen(filename, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Couldn't write to file '%s'\n", filename);
+    return;
+  }
+  fprintf(file, "%s", current_lines[current_lines_length - 1]);
+  fflush(file);
+  fclose(file);
+
+  string_list_free(current_lines, current_lines_length);
+}
+
+static void output_signal(const char* signal_filename,
+  const Metadata* current_metadata,
+  const Metadata* previous_metadata) {
+  const CandidateTranscript* current_transcript =
+    &current_metadata->transcripts[0];
+  char* current_text = plain_text_from_transcript(current_transcript);
+  char* previous_text;
+  if (previous_metadata == NULL) {
+    previous_text = string_duplicate("");
+  }
+  else {
+    const CandidateTranscript* previous_transcript =
+      &previous_metadata->transcripts[0];
+    previous_text = plain_text_from_transcript(previous_transcript);
+  }
+
+  save_last_line_to_file(current_text, previous_text, signal_filename);
+
+  free(current_text);
+  free(previous_text);
+}
+
 static bool process_file(const Settings* settings, ModelState* model_state,
   const char* filename) {
   AudioBuffer* buffer = NULL;
@@ -314,6 +360,8 @@ static bool process_live_input(const Settings* settings, ModelState* model_state
     Metadata* current_metadata = STT_IntermediateDecodeWithMetadata(streaming_state, 1);
 
     output_streaming_transcript(current_metadata, previous_metadata);
+
+    output_signal(settings->signal_file, current_metadata, previous_metadata);
 
     if (previous_metadata != NULL) {
       STT_FreeMetadata(previous_metadata);

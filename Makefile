@@ -49,7 +49,7 @@ all: \
   $(BINDIR)yargs_test \
   $(BINDIR)settings_test \
   $(BINDIR)app_main_test \
-  $(BINDIR)spchcat
+  $(BINDIR)speech_signal
 
 clean:
 	rm -rf $(BUILDDIR)
@@ -159,7 +159,7 @@ $(BINDIR)app_main_test: \
 run_app_main_test: $(BINDIR)app_main_test
 	$<
 
-$(BINDIR)spchcat: \
+$(BINDIR)speech_signal: \
  $(OBJDIR)src/app_main.o \
  $(OBJDIR)src/main.o \
  $(OBJDIR)src/settings.o \
