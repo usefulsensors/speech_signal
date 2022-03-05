@@ -2,9 +2,8 @@ CC := gcc
 CCFLAGS := \
   -std=c99 \
   -Wall \
-  -Werror \
   -g \
-  -O0 \
+  -O3 \
   -D__USE_GNU \
   -Isrc \
   -Isrc/audio \

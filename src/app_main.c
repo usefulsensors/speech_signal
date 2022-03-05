@@ -303,6 +303,7 @@ static bool process_live_input(const Settings* settings, ModelState* model_state
   char* device_name = get_device_name(settings->source);
 
   const uint32_t model_rate = STT_GetModelSampleRate(model_state);
+  TRACE_INT(model_rate);
   const pa_sample_spec sample_spec = { PA_SAMPLE_S16LE, model_rate, 1 };
   int pa_error;
   pa_simple* source_stream = pa_simple_new(
@@ -343,6 +344,12 @@ static bool process_live_input(const Settings* settings, ModelState* model_state
   }
   int stream_capture_offset = 0;
 
+  int32_t stream_bytes_read = 0;
+
+  struct timeval  tv;
+  gettimeofday(&tv, NULL);
+  const double start_time = tv.tv_sec + (tv.tv_usec / 1000000.0);
+
   Metadata* previous_metadata = NULL;
   while (true) {
     int read_error;
@@ -353,6 +360,17 @@ static bool process_live_input(const Settings* settings, ModelState* model_state
         pa_strerror(read_error));
       break;
     }
+    stream_bytes_read += source_buffer_byte_count;
+    const float stream_time = (stream_bytes_read / 2) / (float)(model_rate);
+    gettimeofday(&tv, NULL);
+    const double real_time = (tv.tv_sec + (tv.tv_usec / 1000000.0)) - start_time;
+    const double delta_time = real_time - stream_time;
+    static int print_count = 0;
+    print_count += 1;
+    if ((print_count % 10) == 0) {
+      TRACE_FLT(delta_time);
+    }
+
     if (capture_buffer != NULL) {
       if ((stream_capture_offset + settings->source_buffer_size) > settings->stream_capture_duration) {
         break;
@@ -364,16 +382,16 @@ static bool process_live_input(const Settings* settings, ModelState* model_state
 
     STT_FeedAudioContent(streaming_state, source_buffer,
       settings->source_buffer_size);
-    Metadata* current_metadata = STT_IntermediateDecodeWithMetadata(streaming_state, 1);
+    // Metadata* current_metadata = STT_IntermediateDecodeWithMetadata(streaming_state, 1);
 
-    output_streaming_transcript(current_metadata, previous_metadata);
+    // output_streaming_transcript(current_metadata, previous_metadata);
 
-    output_signal(settings->signal_file, current_metadata, previous_metadata);
+    // output_signal(settings->signal_file, current_metadata, previous_metadata);
 
-    if (previous_metadata != NULL) {
-      STT_FreeMetadata(previous_metadata);
-    }
-    previous_metadata = current_metadata;
+    // if (previous_metadata != NULL) {
+    //   STT_FreeMetadata(previous_metadata);
+    // }
+    // previous_metadata = current_metadata;
   }
 
   if (capture_buffer != NULL) {
@@ -404,7 +422,7 @@ static void set_affinity() {
   CPU_SET(0, &cpuset);
   CPU_SET(1, &cpuset);
   CPU_SET(2, &cpuset);
-  sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+  //sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
 }
 
 int app_main(int argc, char** argv) {
